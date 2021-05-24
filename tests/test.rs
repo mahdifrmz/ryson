@@ -1,23 +1,58 @@
-use ryson::Json;
+use ryson::{Jerr, Json};
+use str_macro::str;
 
 #[test]
 fn accepts_null(){
     let text = String::from("null");
-    let json = Json::parse(&text);
+    let json = Json::parse(&text).unwrap();
     assert_eq!(json,Json::Null);
 }
 
 #[test]
 fn accepts_true(){
     let text = String::from("true");
-    let json = Json::parse(&text);
+    let json = Json::parse(&text).unwrap();
     assert_eq!(json,Json::Bool(true));
 }
-
 
 #[test]
 fn accepts_false(){
     let text = String::from("false");
-    let json = Json::parse(&text);
+    let json = Json::parse(&text).unwrap();
     assert_eq!(json,Json::Bool(false));
+}
+
+#[test]
+fn ignores_beginning_and_ending_spaces_and_new_lines(){
+    let text = String::from(" \n  true\n  ");
+    let json = Json::parse(&text).unwrap();
+    assert_eq!(json,Json::Bool(true));
+}
+
+#[test]
+fn throws_error_on_unknown_keyword(){
+    let text = String::from("True");
+    let jerr = Json::parse(&text).unwrap_err();
+    assert_eq!(jerr,Jerr::InvalidToken(text));
+}
+
+#[test]
+fn throws_unexpected_end_on_empty_string(){
+    let text = String::from("");
+    let jerr = Json::parse(&text).unwrap_err();
+    assert_eq!(jerr,Jerr::UnexpectedEnd);
+}
+
+#[test]
+fn accepts_integers(){
+    let text = String::from("1024");
+    let json = Json::parse(&text).unwrap();
+    assert_eq!(json,Json::Number(str!("1024")));
+}
+
+#[test]
+fn error_on_non_zero_starting_with_zero(){
+    let text = String::from("0916");
+    let jerr = Json::parse(&text).unwrap_err();
+    assert_eq!(jerr,Jerr::InvalidToken(str!("0916")));
 }
