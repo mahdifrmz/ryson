@@ -63,3 +63,32 @@ fn error_on_non_zero_starting_with_zero(){
     let jerr = Json::parse(&text).unwrap_err();
     assert_eq!(jerr,Jerr::InvalidToken(str!("0916")));
 }
+
+#[test]
+fn accepts_rationals(){
+    let text = String::from("16.824");
+    let json = Json::parse(&text).unwrap();
+    assert_eq!(json,Json::Number(str!("16.824")));
+}
+
+#[test]
+fn error_on_ending_dot(){
+    let text = String::from("1624.");
+    let jerr = Json::parse(&text).unwrap_err();
+    assert_eq!(jerr,Jerr::InvalidToken(str!("1624.")));
+}
+
+
+#[test]
+fn error_on_beginning_dot(){
+    let text = String::from(".234567");
+    let jerr = Json::parse(&text).unwrap_err();
+    assert_eq!(jerr,Jerr::InvalidToken(str!(".234567")));
+}
+
+#[test]
+fn error_on_multiple_dots(){
+    let text = String::from("23.456.7");
+    let jerr = Json::parse(&text).unwrap_err();
+    assert_eq!(jerr,Jerr::InvalidToken(str!("23.456.7")));
+}

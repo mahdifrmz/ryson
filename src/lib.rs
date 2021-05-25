@@ -23,36 +23,59 @@ impl Json {
         c >= '0' && c <= '9'
     }
 
-    fn try_parse_number(text : &str)-> Result<bool,Jerr> {
-        if text.len() > 1 && text.chars().next().unwrap() == '0' {
-            return Err(Jerr::InvalidToken(String::from(text)));
+    // takes non-empty string
+    fn is_number(text:&str)->bool{
+        Json::is_digit(text.chars().next().unwrap())
+    }
+
+    fn starts_with(text:&str,c:char)->bool{
+        return text.chars().next().unwrap() == c; 
+    }
+
+    fn ends_with(text:&str,c:char)->bool{
+        return text.chars().rev().next().unwrap() == c; 
+    }
+
+    fn number_initial_check(text:&str)->bool{
+        let r1 = Json::starts_with(text, '.');
+        let r2 = Json::ends_with(text, '.');
+        let r3 = Json::starts_with(text, '0') && text.len() > 1;
+        return !r1 && !r2 && !r3;
+    }
+
+    fn try_parse_number(text : &str)-> bool {
+        if !Json::number_initial_check(text) {
+            return false;
         }
+        let mut once_dot = false;
         for c in text.chars() {
-            if !Json::is_digit(c){
-                return Ok(false);
+            if !Json::is_digit(c) && c != '.'{
+                return false
+            }
+            else if c == '.' {
+                if once_dot {
+                    return false;
+                }
+                once_dot = true;
             }
         }
-        Ok(true)
+        true
     }
     pub fn parse(text:&String)->Result<Json,Jerr> {
         let trimmed = text.trim();
-        if trimmed == "true" {
-            Ok(Json::Bool(true))
-        }
-        else if trimmed == "false" {
-            Ok(Json::Bool(false))
-        }
-        else if trimmed == "null"{
-            Ok(Json::Null)
-        }
-        else if trimmed == ""{
-            Err(Jerr::UnexpectedEnd)
-        }
-        else if Json::try_parse_number(trimmed)?{
-            Ok(Json::Number(String::from(trimmed)))
-        }
-        else {
-            Err(Jerr::InvalidToken(str!(trimmed)))
+        match trimmed {
+            ""=>Err(Jerr::UnexpectedEnd),
+            "true"=>Ok(Json::Bool(true)),
+            "false"=>Ok(Json::Bool(false)),
+            "null"=>Ok(Json::Null),
+            _=>{
+                if Json::is_number(trimmed) && Json::try_parse_number(trimmed){
+                    Ok(Json::Number(str!(trimmed)))
+                }
+                else { // unknown token
+                    Err(Jerr::InvalidToken(str!(trimmed)))
+                }
+            }            
         }
     }
 }
