@@ -23,9 +23,13 @@ impl Json {
         c >= '0' && c <= '9'
     }
 
-    // takes non-empty string
+    // all take non-empty strings except parse
     fn is_number(text:&str)->bool{
         Json::is_digit(text.chars().next().unwrap())
+    }
+
+    fn is_string(text:&str)->bool{
+        text.chars().next().unwrap() == '"'
     }
 
     fn starts_with(text:&str,c:char)->bool{
@@ -61,6 +65,26 @@ impl Json {
         }
         true
     }
+    fn try_parse_string(text:&str)->Result<(),Jerr> {
+        let mut has_ended = false;
+        let mut iter = text.chars();
+        iter.next();
+        for c in iter {
+            println!("char:{}",c);
+            if has_ended {
+                return Err(Jerr::InvalidToken(str!(text)));
+            }
+            if c == '"' {
+                has_ended = true;
+            }
+        }
+        if has_ended {
+            Ok(())
+        }
+        else{
+            Err(Jerr::UnexpectedEnd)
+        }
+    }
     pub fn parse(text:&String)->Result<Json,Jerr> {
         let trimmed = text.trim();
         match trimmed {
@@ -71,6 +95,12 @@ impl Json {
             _=>{
                 if Json::is_number(trimmed) && Json::try_parse_number(trimmed){
                     Ok(Json::Number(str!(trimmed)))
+                }
+                else if Json::is_string(trimmed) {
+                    match Json::try_parse_string(trimmed) {
+                        Err(jerr)=>Err(jerr),
+                        Ok(())=>Ok(Json::String(str!(trimmed)))
+                    }
                 }
                 else { // unknown token
                     Err(Jerr::InvalidToken(str!(trimmed)))

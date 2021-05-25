@@ -92,3 +92,24 @@ fn error_on_multiple_dots(){
     let jerr = Json::parse(&text).unwrap_err();
     assert_eq!(jerr,Jerr::InvalidToken(str!("23.456.7")));
 }
+
+#[test]
+fn accepts_strings(){
+    let text = String::from("\"hello world\"");
+    let json = Json::parse(&text).unwrap();
+    assert_eq!(json,Json::String(str!("\"hello world\"")));
+}
+
+#[test]
+fn unexpected_end_of_string(){
+    let text = String::from("\"hello world");
+    let jerr = Json::parse(&text).unwrap_err();
+    assert_eq!(jerr,Jerr::UnexpectedEnd);
+}
+
+#[test]
+fn error_on_text_after_ending_quote(){
+    let text = String::from("\"hello \nworld");
+    let jerr = Json::parse(&text).unwrap_err();
+    assert_eq!(jerr,Jerr::UnexpectedEnd);
+}
