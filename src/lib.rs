@@ -1,5 +1,5 @@
-use std::{collections::HashMap, mem};
-use str_macro::str;
+use std::{collections::HashMap, iter::{Enumerate, Peekable}, mem};
+pub type StrIt<'a> = Peekable<Enumerate<std::str::Chars<'a>>>;
 
 #[derive(Debug,PartialEq,Eq)]
 pub enum Json {
@@ -14,6 +14,7 @@ pub enum Json {
 #[derive(Debug,PartialEq,Eq)]
 pub enum Jerr {
     InvalidToken(String),
+    UnexpectedChar(usize),
     UnexpectedEnd,
     InvalidUnicodeSequence(String),
     UnknownEscape(char)
@@ -82,11 +83,8 @@ impl JStringParser {
         Ok(())
     }
 
-    fn push_char(&mut self,text:&str,c:char)->Result<(),Jerr> {
-        if self.has_ended {
-            return Err(Jerr::InvalidToken(str!(text)));
-        }
-        else if self.is_unicode {
+    fn push_char(&mut self,c:char)->Result<(),Jerr> {
+        if self.is_unicode {
             self.push_char_unicode(c)?;
         }
         else if self.escape {
@@ -110,11 +108,12 @@ impl JStringParser {
         }
     }
 
-    fn parse_string(&mut self,text:&str)->Result<Json,Jerr> {
-        let mut iter = text.chars();
+    fn parse_string(&mut self,iter:&mut StrIt)->Result<Json,Jerr> {
         iter.next();
-        for c in iter {
-            self.push_char(text, c)?;
+        for (_,c) in iter {
+            if !self.has_ended {
+                self.push_char(c)?;
+            }
         }
         self.finalize()
     }
@@ -127,12 +126,12 @@ impl Json {
     }
 
     // all take non-empty strings except parse
-    fn is_number(text:&str)->bool{
-        Json::is_digit(text.chars().next().unwrap())
+    fn is_number(iter:&mut StrIt)->bool{
+        Json::is_digit(iter.peek().unwrap().1)
     }
 
-    fn is_string(text:&str)->bool{
-        text.chars().next().unwrap() == '"'
+    fn is_string(iter:&mut StrIt)->bool{
+        iter.peek().unwrap().1 == '"'
     }
 
     fn starts_with(text:&str,c:char)->bool{
@@ -143,30 +142,38 @@ impl Json {
         return text.chars().rev().next().unwrap() == c; 
     }
 
-    fn number_initial_check(text:&str)->bool{
-        let r1 = Json::starts_with(text, '.');
+    fn number_final_check(text:&str)->bool{
         let r2 = Json::ends_with(text, '.');
         let r3 = Json::starts_with(text, '0') && text.len() > 1;
-        return !r1 && !r2 && !r3;
+        return !r2 && !r3;
     }
 
-    fn validate_number(text : &str)-> bool {
-        if !Json::number_initial_check(text) {
-            return false;
-        }
+    fn parse_number(iter : &mut StrIt)-> Result<Json,Jerr> {
+        let mut buffer = String::new();
         let mut once_dot = false;
-        for c in text.chars() {
-            if !Json::is_digit(c) && c != '.'{
-                return false
+        for (_,c) in iter {
+            if Json::is_digit(c) {
+                buffer.push(c);
             }
             else if c == '.' {
-                if once_dot {
-                    return false;
+                if !once_dot {
+                    once_dot = true;
+                    buffer.push(c);
                 }
-                once_dot = true;
+                else{
+                    return Ok(Json::Number(buffer));
+                }
+            }
+            else{
+                return Ok(Json::Number(buffer));
             }
         }
-        true
+        if Json::number_final_check(&buffer) {
+            Ok(Json::Number(buffer))
+        }
+        else{
+            Err(Jerr::InvalidToken(buffer))
+        }
     }
     fn u8arr_to_u16arr(v:Vec<u8>)->Vec<u16>{
         let mut nv = vec![];
@@ -186,26 +193,44 @@ impl Json {
             Err(_)=>Err(Jerr::InvalidUnicodeSequence(unicode.clone()))
         }
     }
-    
-    pub fn parse(text:&String)->Result<Json,Jerr> {
-        let trimmed = text.trim();
-        match trimmed {
-            ""=>Err(Jerr::UnexpectedEnd),
-            "true"=>Ok(Json::Bool(true)),
-            "false"=>Ok(Json::Bool(false)),
-            "null"=>Ok(Json::Null),
-            _=>{
-                if Json::is_number(trimmed) && Json::validate_number(trimmed){
-                    Ok(Json::Number(str!(trimmed)))
-                }
-                else if Json::is_string(trimmed) {
-                    let mut parser = JStringParser::new();
-                    parser.parse_string(trimmed)
-                }
-                else { // unknown token
-                    Err(Jerr::InvalidToken(str!(trimmed)))
+    fn begins_with_str(iter:&mut StrIt,text:&str)->bool {
+        let mut it = iter.clone();
+        for c in text.chars() {
+            match it.next() {
+                Some(ic)=>{
+                    if ic.1 != c {
+                        return false;
+                    }
+                },
+                None=>{
+                    return false;
                 }
             }
+        }
+        *iter = it;
+        true
+
+    }
+    pub fn parse(iter:&mut StrIt)->Result<Json,Jerr> {
+        
+        if Json::begins_with_str(iter, "true"){
+            return Ok(Json::Bool(true));
+        }
+        else if Json::begins_with_str(iter, "false"){
+            return Ok(Json::Bool(false));
+        }
+        else if Json::begins_with_str(iter, "null"){
+            return Ok(Json::Null);
+        }
+        else if Json::is_number(iter) {
+            Json::parse_number(iter)
+        }
+        else if Json::is_string(iter) {
+            let mut parser = JStringParser::new();
+            parser.parse_string(iter)
+        }
+        else { // unknown token
+            Err(Jerr::UnexpectedChar(iter.peek().unwrap().0))
         }
     }
 }
