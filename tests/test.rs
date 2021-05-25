@@ -97,7 +97,7 @@ fn error_on_multiple_dots(){
 fn accepts_strings(){
     let text = String::from("\"hello world\"");
     let json = Json::parse(&text).unwrap();
-    assert_eq!(json,Json::String(str!("\"hello world\"")));
+    assert_eq!(json,Json::String(str!("hello world")));
 }
 
 #[test]
@@ -112,4 +112,46 @@ fn error_on_text_after_ending_quote(){
     let text = String::from("\"hello \nworld");
     let jerr = Json::parse(&text).unwrap_err();
     assert_eq!(jerr,Jerr::UnexpectedEnd);
+}
+
+#[test]
+fn escapes_back_slash_quote(){
+    let text = String::from("\"a quote is a \\\" sign\"");
+    let json = Json::parse(&text).unwrap();
+    assert_eq!(json,Json::String(str!("a quote is a \" sign")));
+}
+
+#[test]
+fn escapes_double_back_slash(){
+    let text = String::from("\"a backslash is a \\\\ sign\"");
+    let json = Json::parse(&text).unwrap();
+    assert_eq!(json,Json::String(str!("a backslash is a \\ sign")));
+}
+
+#[test]
+fn escapes_criagereturn_tab_newline_formfeed_backspace(){
+    let text = String::from("\"escaped:\\n\\thello\\b\\ftext file\\r\"");
+    let json = Json::parse(&text).unwrap();
+    assert_eq!(json,Json::String(str!("escaped:\n\thello\x08\x0Ctext file\r")));
+}
+
+#[test]
+fn escapes_unicode(){
+    let text = String::from("\"this is theta : \\u03F4\"");
+    let json = Json::parse(&text).unwrap();
+    assert_eq!(json,Json::String(str!("this is theta : ϴ")));
+}
+
+#[test]
+fn error_on_invalid_unicode(){
+    let text = String::from("\"this is invalid : \\u93G4\"");
+    let jerr = Json::parse(&text).unwrap_err();
+    assert_eq!(jerr,Jerr::InvalidUnicodeSequence(str!("93G4")));
+}
+
+#[test]
+fn error_on_unknown_escape(){
+    let text = String::from("\"I don't know \\a\"");
+    let jerr = Json::parse(&text).unwrap_err();
+    assert_eq!(jerr,Jerr::UnknownEscape('a'));
 }
