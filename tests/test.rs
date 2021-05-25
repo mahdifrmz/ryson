@@ -51,6 +51,13 @@ fn accepts_integers(){
 }
 
 #[test]
+fn error_on_non_digits_after_digits(){
+    let text = String::from("4534h");
+    let jerr = Json::parse(&text).unwrap_err();
+    assert_eq!(jerr,Jerr::InvalidToken(str!("4534h")));
+}
+
+#[test]
 fn error_on_non_zero_starting_with_zero(){
     let text = String::from("0916");
     let jerr = Json::parse(&text).unwrap_err();
