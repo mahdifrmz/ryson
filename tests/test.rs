@@ -237,6 +237,13 @@ fn accept_nested_arrays(){
 }
 
 #[test]
+fn accepts_empty_array(){
+    let mut text = make_iterator("[]");
+    let json = Json::parse(&mut text).unwrap();
+    assert_eq!(json,Json::Array(vec![]));
+}
+
+#[test]
 fn accepts_single_field_objects(){
     let mut text = make_iterator("{\"port\":8080}");
     let json = Json::parse(&mut text).unwrap();
@@ -315,4 +322,11 @@ fn accepts_array_with_object_element(){
     let arr = Json::Array(vec![Json::Object(inner_map)]);
 
     assert_eq!(json,arr);
+}
+
+#[test]
+fn accepts_empty_object(){
+    let mut text = make_iterator("{}");
+    let json = Json::parse(&mut text).unwrap();
+    assert_eq!(json,Json::Object(HashMap::new()));
 }

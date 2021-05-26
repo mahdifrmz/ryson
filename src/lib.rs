@@ -224,8 +224,19 @@ impl JObjectParser {
         }
         Ok(false)
     }
+    fn init_check(&self,iter:&mut StrIt)->bool{
+        if let Some((_,c)) = iter.peek(){
+            if *c == '}' {
+                return true 
+            }
+        }
+        false
+    }
     fn parse(&mut self,iter:&mut StrIt)->Result<Json,Jerr>{
-        iter.next().unwrap(); 
+        iter.next().unwrap();
+        if self.init_check(iter) {
+            return Ok(Json::Object(HashMap::new()));
+        }
         loop {
             match iter.peek() {
                 None=>{
@@ -362,7 +373,12 @@ impl Json {
     fn parse_array(iter:&mut StrIt)->Result<Json,Jerr>{
         iter.next().unwrap();
         let mut vector : Vec<Json> = vec![];
-        let mut iterated_value = false; 
+        let mut iterated_value = false;
+        if let Some((_,c)) = iter.peek(){
+            if *c == ']' {
+                return Ok(Json::Array(vec![]));   
+            }
+        }
         loop {
             match iter.peek() {
                 None=>{
