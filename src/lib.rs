@@ -1,4 +1,4 @@
-use std::{collections::HashMap, iter::{Enumerate, Peekable}, mem};
+use std::{collections::HashMap, iter::{Enumerate, Peekable}, mem, vec};
 pub type StrIt<'a> = Peekable<Enumerate<std::str::Chars<'a>>>;
 
 #[derive(Debug,PartialEq,Eq)]
@@ -17,7 +17,9 @@ pub enum Jerr {
     UnexpectedChar(usize),
     UnexpectedEnd,
     InvalidUnicodeSequence(String),
-    UnknownEscape(char)
+    UnknownEscape(char),
+    ExpectedCommaOrEnd(usize),
+    ExpectedValue(usize)
 }
 
 struct JStringParser {
@@ -140,6 +142,10 @@ impl Json {
         iter.peek().unwrap().1 == '"'
     }
 
+    fn is_array(iter:&mut StrIt)->bool{
+        iter.peek().unwrap().1 == '['
+    }
+
     fn starts_with(text:&str,c:char)->bool{
         return text.chars().next().unwrap() == c; 
     }
@@ -231,6 +237,41 @@ impl Json {
         true
 
     }
+    fn parse_array(iter:&mut StrIt)->Result<Json,Jerr>{
+        iter.next().unwrap();
+        let mut vector : Vec<Json> = vec![];
+        let mut iterated_value = false; 
+        loop {
+            match iter.peek() {
+                None=>{
+                    return Err(Jerr::UnexpectedEnd);
+                },
+                Some((i,c))=>match *c {
+                    ',' | ']' => if iterated_value {
+                        let c = *c;
+                        iter.next();
+                        iterated_value = false;
+                        if c == ']' {
+                            return Ok(Json::Array(vector));
+                        }
+                    }
+                    else{
+                        return Err(Jerr::ExpectedValue(*i));
+                    },
+                    ' ' | '\n' | '\t'=>{
+                        iter.next();
+                    },
+                    _=> if !iterated_value {
+                        vector.push(Json::parse(iter)?);
+                        iterated_value = true;
+                    }
+                    else{
+                        return Err(Jerr::ExpectedCommaOrEnd(*i));
+                    }
+                }
+            }
+        }
+    }
     pub fn parse(iter:&mut StrIt)->Result<Json,Jerr> {
         
         if Json::begins_with_str(iter, "true"){
@@ -248,6 +289,9 @@ impl Json {
         else if Json::is_string(iter) {
             let mut parser = JStringParser::new();
             parser.parse_string(iter)
+        }
+        else if Json::is_array(iter) {
+            Json::parse_array(iter)
         }
         else { // unknown token
             Err(Jerr::UnexpectedChar(iter.peek().unwrap().0))

@@ -166,3 +166,70 @@ fn preserves_position_on_string(){
     Json::parse(&mut text).unwrap();
     assert_eq!(text.peek().unwrap().0,6);
 }
+
+#[test]
+fn single_element_array(){
+    let mut text = make_iterator("[false]");
+    let json = Json::parse(&mut text).unwrap();
+    assert_eq!(json,Json::Array(vec![Json::Bool(false)]));
+}
+
+#[test]
+fn multi_element_array(){
+    let mut text = make_iterator(
+        "[true,1444,\"third element\"]"
+    );
+    let json = Json::parse(&mut text).unwrap();
+    assert_eq!(json,Json::Array(vec![
+        Json::Bool(true),
+        Json::Number(str!("1444")),
+        Json::String(str!("third element"))
+    ]));
+}
+
+#[test]
+fn ignore_white_space_newline(){
+    let mut text = make_iterator(
+        "[true,  1444\n,  \"third element\"\n\n  ]"
+    );
+    let json = Json::parse(&mut text).unwrap();
+    assert_eq!(json,Json::Array(vec![
+        Json::Bool(true),
+        Json::Number(str!("1444")),
+        Json::String(str!("third element"))
+    ]));
+}
+
+#[test]
+fn error_on_not_ended_array(){
+    let mut text = make_iterator(
+        "[true,  1444\n,  \"third element\"\n\n  "
+    );
+    let jerr = Json::parse(&mut text).unwrap_err();
+    assert_eq!(jerr,Jerr::UnexpectedEnd);
+}
+
+#[test]
+fn error_on_multiple_commas(){
+    let mut text = make_iterator(
+        "[true,  1444\n, , \"third element\"\n\n  "
+    );
+    let jerr = Json::parse(&mut text).unwrap_err();
+    assert_eq!(jerr,Jerr::ExpectedValue(15));
+}
+
+#[test]
+fn error_on_multiple_value(){
+    let mut text = make_iterator(
+        "[true,  1444\n \"third element\"\n\n  "
+    );
+    let jerr = Json::parse(&mut text).unwrap_err();
+    assert_eq!(jerr,Jerr::ExpectedCommaOrEnd(14));
+}
+
+#[test]
+fn accept_nested_arrays(){
+    let mut text = make_iterator("[\n   [false]\n]");
+    let json = Json::parse(&mut text).unwrap();
+    assert_eq!(json,Json::Array(vec![Json::Array(vec![Json::Bool(false)])]));
+}
