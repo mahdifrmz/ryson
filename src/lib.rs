@@ -1,4 +1,4 @@
-use std::{collections::HashMap, iter::{Enumerate, Peekable}, mem, vec};
+use std::{collections::HashMap, iter::{Enumerate, Peekable}, mem, usize, vec};
 pub type StrIt<'a> = Peekable<Enumerate<std::str::Chars<'a>>>;
 
 #[derive(Debug,PartialEq,Eq)]
@@ -19,7 +19,9 @@ pub enum Jerr {
     InvalidUnicodeSequence(String),
     UnknownEscape(char),
     ExpectedCommaOrEnd(usize),
-    ExpectedValue(usize)
+    ExpectedColon(usize),
+    ExpectedValue(usize),
+    ExpectedProperty(usize),
 }
 
 struct JStringParser {
@@ -127,6 +129,122 @@ impl JStringParser {
     }
 }
 
+#[derive(PartialEq,Eq)]
+enum ObjectParserState {
+    Value,
+    Colon,
+    Label,
+    Comma
+}
+
+struct JObjectParser {
+    state:ObjectParserState,
+    identifier:String,
+    map:HashMap<String,Json>
+}
+
+impl JObjectParser {
+    fn new()->JObjectParser {
+        JObjectParser{
+            state:ObjectParserState::Label,
+            identifier:String::new(),
+            map:HashMap::new()
+        }
+    }
+
+    fn reset(&mut self){
+        *self = JObjectParser::new();
+    }
+    fn push_label(&mut self,iter:&mut StrIt,i:usize)->Result<(),Jerr>{
+        match Json::parse(iter) {
+            Ok(json)=>{
+                match json {
+                    Json::String(str)=>{
+                        self.identifier = str;
+                        self.state = ObjectParserState::Colon;
+                        Ok(())
+                    },
+                    _=>{
+                        Err(Jerr::ExpectedProperty(i))
+                    }
+                }
+            }
+            Err(_) => Err(Jerr::ExpectedProperty(i))
+        }
+    }
+    fn push_colon(&mut self,iter:&mut StrIt,c:char,i:usize)->Result<(),Jerr>{
+        match c {
+            ':' => {
+                iter.next();
+                self.state = ObjectParserState::Value;
+                Ok(())
+            },
+            _=>{
+                Err(Jerr::ExpectedColon(i))
+            }
+        }
+    }
+    fn push_value(&mut self,iter:&mut StrIt,i:usize)->Result<(),Jerr>{
+        match Json::parse(iter) {
+            Ok(json)=>{
+                self.map.insert(mem::replace(&mut self.identifier, String::new()),json);
+                self.state = ObjectParserState::Comma;
+                Ok(())
+            }
+            Err(_) => Err(Jerr::ExpectedValue(i))
+        }
+    }
+    fn push_comma(&mut self,iter:&mut StrIt,c:char,i:usize)->Result<bool,Jerr>{
+        match c {
+            ',' | '}' => {
+                iter.next();
+                self.state = ObjectParserState::Label;
+                Ok(c == '}')
+            },
+            _=>{
+                Err(Jerr::ExpectedCommaOrEnd(i))
+            }
+        }
+    }
+    fn push(&mut self,iter:&mut StrIt,c:char,i:usize)->Result<bool,Jerr>{
+        if c == ' ' || c == '\t' || c == '\n' {
+            iter.next();
+        }
+        else {
+            match self.state {
+                ObjectParserState::Label => self.push_label(iter, i)?,
+                ObjectParserState::Colon => self.push_colon(iter, c, i)?,
+                ObjectParserState::Value => self.push_value(iter, i)?,
+                ObjectParserState::Comma => {
+                    if self.push_comma(iter, c, i)? {
+                        return Ok(true);
+                    }
+                }
+            }
+        }
+        Ok(false)
+    }
+    fn parse(&mut self,iter:&mut StrIt)->Result<Json,Jerr>{
+        iter.next().unwrap(); 
+        loop {
+            match iter.peek() {
+                None=>{
+                    return Err(Jerr::UnexpectedEnd);
+                },
+                Some((i,c))=> {
+                    let c = *c;
+                    let i = *i;
+                    if self.push(iter,c,i)? {
+                        let map = mem::replace(&mut self.map, HashMap::new());
+                        self.reset();
+                        return Ok(Json::Object(map));
+                    }
+                }
+            }
+        }
+    }
+}
+
 impl Json {
 
     fn is_digit(c:char)->bool{
@@ -144,6 +262,10 @@ impl Json {
 
     fn is_array(iter:&mut StrIt)->bool{
         iter.peek().unwrap().1 == '['
+    }
+
+    fn is_object(iter:&mut StrIt)->bool{
+        iter.peek().unwrap().1 == '{'
     }
 
     fn starts_with(text:&str,c:char)->bool{
@@ -292,6 +414,10 @@ impl Json {
         }
         else if Json::is_array(iter) {
             Json::parse_array(iter)
+        }
+        else if Json::is_object(iter) {
+            let mut parser = JObjectParser::new();
+            parser.parse(iter)
         }
         else { // unknown token
             Err(Jerr::UnexpectedChar(iter.peek().unwrap().0))

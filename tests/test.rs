@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use ryson::{Jerr, Json, StrIt};
 use str_macro::str;
 
@@ -232,4 +234,85 @@ fn accept_nested_arrays(){
     let mut text = make_iterator("[\n   [false]\n]");
     let json = Json::parse(&mut text).unwrap();
     assert_eq!(json,Json::Array(vec![Json::Array(vec![Json::Bool(false)])]));
+}
+
+#[test]
+fn accepts_single_field_objects(){
+    let mut text = make_iterator("{\"port\":8080}");
+    let json = Json::parse(&mut text).unwrap();
+    let mut map = HashMap::new();
+    map.insert(str!("port"), Json::Number(str!("8080")));
+    assert_eq!(json,Json::Object(map));
+}
+
+#[test]
+fn error_on_missing_colon(){
+    let mut text = make_iterator("{\"port\",8080}");
+    let jerr = Json::parse(&mut text).unwrap_err();
+    assert_eq!(jerr,Jerr::ExpectedColon(7));
+}
+
+#[test]
+fn error_on_invalid_property_identifier(){
+    let mut text = make_iterator("{3,8080}");
+    let jerr = Json::parse(&mut text).unwrap_err();
+    assert_eq!(jerr,Jerr::ExpectedProperty(1));
+}
+
+#[test]
+fn error_on_missing_property(){
+    let mut text = make_iterator("{\"host\":}");
+    let jerr = Json::parse(&mut text).unwrap_err();
+    assert_eq!(jerr,Jerr::ExpectedValue(8));
+}
+
+#[test]
+fn accepts_multi_field_objects(){
+    let mut text = make_iterator("{\"port\":80,\n\"host\":\"localhost\"}");
+    let json = Json::parse(&mut text).unwrap();
+
+    let mut map = HashMap::new();
+    map.insert(str!("port"), Json::Number(str!("80")));
+    map.insert(str!("host"), Json::String(str!("localhost")));
+
+    assert_eq!(json,Json::Object(map));
+}
+
+#[test]
+fn accepts_object_array_property(){
+    let mut text = make_iterator("{\"port\":80,\n\"host\":[\"localhost\",true]}");
+    let json = Json::parse(&mut text).unwrap();
+
+    let mut map = HashMap::new();
+    let arr = vec![Json::String(str!("localhost")),Json::Bool(true)];
+    map.insert(str!("port"), Json::Number(str!("80")));
+    map.insert(str!("host"), Json::Array(arr));
+
+    assert_eq!(json,Json::Object(map));
+}
+
+#[test]
+fn accepts_nested_objects(){
+    let mut text = make_iterator("{\"port\":80,\n\"host\":{\"localhost\":true}}");
+    let json = Json::parse(&mut text).unwrap();
+
+    let mut map = HashMap::new();
+    let mut inner_map = HashMap::new();
+    inner_map.insert(str!("localhost"), Json::Bool(true));
+    map.insert(str!("port"), Json::Number(str!("80")));
+    map.insert(str!("host"), Json::Object(inner_map));
+
+    assert_eq!(json,Json::Object(map));
+}
+
+#[test]
+fn accepts_array_with_object_element(){
+    let mut text = make_iterator("[{\"version\":\"1.10.3\"}]");
+    let json = Json::parse(&mut text).unwrap();
+
+    let mut inner_map = HashMap::new();
+    inner_map.insert(str!("version"), Json::String(str!("1.10.3")));
+    let arr = Json::Array(vec![Json::Object(inner_map)]);
+
+    assert_eq!(json,arr);
 }
