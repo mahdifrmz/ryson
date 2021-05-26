@@ -145,3 +145,24 @@ fn error_on_unknown_escape(){
     let jerr = Json::parse(&mut text).unwrap_err();
     assert_eq!(jerr,Jerr::UnknownEscape('a'));
 }
+
+#[test]
+fn iterator_preserves_position(){
+    let mut text = make_iterator("null,");
+    Json::parse(&mut text).unwrap();
+    assert_eq!(text.peek().unwrap().0,4);
+}
+
+#[test]
+fn preserves_position_on_number(){
+    let mut text = make_iterator("234 ");
+    Json::parse(&mut text).unwrap();
+    assert_eq!(text.peek().unwrap().0,3);
+}
+
+#[test]
+fn preserves_position_on_string(){
+    let mut text = make_iterator("\"text\":true");
+    Json::parse(&mut text).unwrap();
+    assert_eq!(text.peek().unwrap().0,6);
+}

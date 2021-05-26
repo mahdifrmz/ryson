@@ -110,9 +110,15 @@ impl JStringParser {
 
     fn parse_string(&mut self,iter:&mut StrIt)->Result<Json,Jerr> {
         iter.next();
-        for (_,c) in iter {
+        loop {
             if !self.has_ended {
-                self.push_char(c)?;
+                match iter.next() {
+                    None=>break,
+                    Some((_,c))=> self.push_char(c)?
+                }
+            }
+            else{
+                break
             }
         }
         self.finalize()
@@ -148,31 +154,45 @@ impl Json {
         return !r2 && !r3;
     }
 
-    fn parse_number(iter : &mut StrIt)-> Result<Json,Jerr> {
-        let mut buffer = String::new();
-        let mut once_dot = false;
-        for (_,c) in iter {
-            if Json::is_digit(c) {
-                buffer.push(c);
-            }
-            else if c == '.' {
-                if !once_dot {
-                    once_dot = true;
-                    buffer.push(c);
-                }
-                else{
-                    return Ok(Json::Number(buffer));
-                }
-            }
-            else{
-                return Ok(Json::Number(buffer));
-            }
-        }
+    fn parse_number_finalize(buffer:String)-> Result<Json,Jerr> {
         if Json::number_final_check(&buffer) {
             Ok(Json::Number(buffer))
         }
         else{
             Err(Jerr::InvalidToken(buffer))
+        }
+    }
+
+    fn parse_number(iter : &mut StrIt)-> Result<Json,Jerr> {
+        let mut buffer = String::new();
+        let mut once_dot = false;
+
+        loop {
+            match iter.peek() {
+                None => {
+                    break Json::parse_number_finalize(buffer);
+                },
+                Some((_,c))=>{
+                    let c = *c;
+                    if Json::is_digit(c) {
+                        buffer.push(c);
+                        iter.next();
+                    }
+                    else if c == '.' {
+                        if !once_dot {
+                            once_dot = true;
+                            buffer.push(c);
+                            iter.next();
+                        }
+                        else{
+                            break Json::parse_number_finalize(buffer);
+                        }
+                    }
+                    else{
+                        break Json::parse_number_finalize(buffer);
+                    }
+                }
+            }
         }
     }
     fn u8arr_to_u16arr(v:Vec<u8>)->Vec<u16>{
