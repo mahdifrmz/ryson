@@ -1,6 +1,6 @@
 use std::{mem, usize, vec};
 
-use crate::common::{Json,Jerr,IteratorParser,StrIt};
+use crate::parser::common::{Jerr,IteratorParser,StrIt};
 
 #[derive(Debug,PartialEq,Eq)]
 enum ArrayParserState {
@@ -9,7 +9,7 @@ enum ArrayParserState {
     Value
 }
 pub struct JArrayParser {
-    vector:Vec<Json>,
+    vector:Vec<crate::Json>,
     state:ArrayParserState
 }
 
@@ -33,12 +33,12 @@ impl JArrayParser {
             Err(Jerr::ExpectedValue(i))
         }
     }
-    fn push_bracket(&mut self,iter:&mut StrIt,i:usize)->Result<Json,Jerr>{
+    fn push_bracket(&mut self,iter:&mut StrIt,i:usize)->Result<crate::Json,Jerr>{
         if self.state == ArrayParserState::Comma || self.state == ArrayParserState::Beginning {
             iter.next();
             let vec = mem::replace(&mut self.vector, vec![]);
             self.reset();
-            return Ok(Json::Array(vec));
+            return Ok(crate::Json::Array(vec));
         }
         else{
             return Err(Jerr::ExpectedValue(i));
@@ -57,7 +57,7 @@ impl JArrayParser {
     fn push_space(&mut self,iter:&mut StrIt){
         iter.next();
     }
-    pub fn parse(&mut self,iter:&mut StrIt,iterparser:&impl IteratorParser)->Result<Json,Jerr>{
+    pub fn parse(&mut self,iter:&mut StrIt,iterparser:&impl IteratorParser)->Result<crate::Json,Jerr>{
         iter.next().unwrap();
         loop {
             match iter.peek().cloned() {

@@ -1,5 +1,5 @@
 pub struct JNumberParser;
-use crate::common::*;
+use crate::parser::common::*;
 
 impl JNumberParser {
 
@@ -9,16 +9,16 @@ impl JNumberParser {
         return !r2 && !r3;
     }
 
-    fn parse_number_finalize(buffer:String)-> Result<Json,Jerr> {
+    fn parse_number_finalize(buffer:String)-> Result<crate::Json,Jerr> {
         if JNumberParser::number_final_check(&buffer) {
-            Ok(Json::Number(buffer))
+            Ok(crate::Json::Number(buffer))
         }
         else{
             Err(Jerr::InvalidToken(buffer))
         }
     }
 
-    fn parse_number_push(iter : &mut StrIt,mut buffer:String,once_dot:&mut bool,c:char)-> Result<Result<Json,Jerr>,String> {
+    fn parse_number_push(iter : &mut StrIt,mut buffer:String,once_dot:&mut bool,c:char)-> Result<Result<crate::Json,Jerr>,String> {
         if is_digit(c) {
             buffer.push(c);
             iter.next();
@@ -40,7 +40,7 @@ impl JNumberParser {
         }
     }
 
-    pub fn parse(iter : &mut StrIt)-> Result<Json,Jerr> {
+    pub fn parse(iter : &mut StrIt)-> Result<crate::Json,Jerr> {
         let mut buffer = String::new();
         let mut once_dot = false;
 

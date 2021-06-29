@@ -1,16 +1,6 @@
 use std::{collections::HashMap, iter::{Enumerate, Peekable}};
 pub type StrIt<'a> = Peekable<Enumerate<std::str::Chars<'a>>>;
-pub type Jmap = HashMap<String,Json>;
-
-#[derive(Debug,PartialEq,Eq,Clone)]
-pub enum Json {
-    Null,
-    Bool(bool),
-    Number(String),
-    String(String),
-    Array(Vec<Json>),
-    Object(Jmap)
-}
+pub type Jmap = HashMap<String,crate::Json>;
 
 #[derive(Debug,PartialEq,Eq)]
 pub enum Jerr {
@@ -99,5 +89,5 @@ pub fn make_iterator(text:&str)->StrIt{
 }
 
 pub trait IteratorParser {
-    fn parse (&self,iter: &mut StrIt)->Result<Json,Jerr>;
+    fn parse (&self,iter: &mut StrIt)->Result<crate::Json,Jerr>;
 }

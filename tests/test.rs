@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use ryson::{Jerr, Json, /*StrIt*/};
+use ryson::{Json,Jerr};
 use str_macro::str;
 
 #[test]

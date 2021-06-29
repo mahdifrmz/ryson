@@ -1,5 +1,5 @@
 use std::{collections::HashMap, mem};
-use crate::common::*;
+use crate::parser::common::*;
 
 #[derive(PartialEq,Eq)]
 enum ObjectParserState {
@@ -31,7 +31,7 @@ impl JObjectParser {
         match iterparser.parse(iter) {
             Ok(json)=>{
                 match json {
-                    Json::String(str)=>{
+                    crate::Json::String(str)=>{
                         self.identifier = str;
                         self.state = ObjectParserState::Colon;
                         Ok(())
@@ -105,10 +105,10 @@ impl JObjectParser {
         }
         false
     }
-    pub fn parse(&mut self,iter:&mut StrIt,iterparser:&impl IteratorParser)->Result<Json,Jerr>{
+    pub fn parse(&mut self,iter:&mut StrIt,iterparser:&impl IteratorParser)->Result<crate::Json,Jerr>{
         iter.next().unwrap();
         if self.init_check(iter) {
-            return Ok(Json::Object(HashMap::new()));
+            return Ok(crate::Json::Object(HashMap::new()));
         }
         loop {
             match iter.peek() {
@@ -121,7 +121,7 @@ impl JObjectParser {
                     if self.push(iter,c,i,iterparser)? {
                         let map = mem::replace(&mut self.map, HashMap::new());
                         self.reset();
-                        return Ok(Json::Object(map));
+                        return Ok(crate::Json::Object(map));
                     }
                 }
             }

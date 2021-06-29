@@ -1,6 +1,6 @@
 use std::mem;
 
-use crate::common::*;
+use crate::parser::common::*;
 pub struct JStringParser {
     has_ended : bool,
     buffer : String,
@@ -77,11 +77,11 @@ impl JStringParser {
         Ok(())
     }
 
-    fn finalize(&mut self)->Result<Json,Jerr>{
+    fn finalize(&mut self)->Result<crate::Json,Jerr>{
         if self.has_ended {
             let buff = mem::replace(&mut self.buffer, String::new());
             self.reset();
-            Ok(Json::String(buff))
+            Ok(crate::Json::String(buff))
         }
         else{
             self.reset();
@@ -89,7 +89,7 @@ impl JStringParser {
         }
     }
 
-    pub fn parse(&mut self,iter:&mut StrIt)->Result<Json,Jerr> {
+    pub fn parse(&mut self,iter:&mut StrIt)->Result<crate::Json,Jerr> {
         iter.next();
         loop {
             if !self.has_ended {
