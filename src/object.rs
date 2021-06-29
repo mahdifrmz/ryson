@@ -12,7 +12,7 @@ enum ObjectParserState {
 pub struct JObjectParser {
     state:ObjectParserState,
     identifier:String,
-    map:HashMap<String,Json>
+    map:Jmap
 }
 
 impl JObjectParser {

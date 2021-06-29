@@ -1,14 +1,15 @@
 use std::{collections::HashMap, iter::{Enumerate, Peekable}};
 pub type StrIt<'a> = Peekable<Enumerate<std::str::Chars<'a>>>;
+pub type Jmap = HashMap<String,Json>;
 
-#[derive(Debug,PartialEq,Eq)]
+#[derive(Debug,PartialEq,Eq,Clone)]
 pub enum Json {
     Null,
     Bool(bool),
     Number(String),
     String(String),
     Array(Vec<Json>),
-    Object(HashMap<String,Json>)
+    Object(Jmap)
 }
 
 #[derive(Debug,PartialEq,Eq)]

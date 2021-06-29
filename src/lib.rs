@@ -52,6 +52,54 @@ impl Json {
             Some((i,_))=>Err(Jerr::ExpectedEnd(*i))
         }
     }
+    pub fn as_number(&self)-> Option<&String> {
+        match self {
+            Json::Number(num)=>Some(num),
+            _=>None
+        }
+    }
+    pub fn as_string(&self)-> Option<&String> {
+        match self {
+            Json::String(str)=>Some(str),
+            _=>None
+        }
+    }
+    pub fn as_bool(&self)-> Option<&bool> {
+        match self {
+            Json::Bool(b)=>Some(b),
+            _=>None
+        }
+    }
+    pub fn as_null(&self)-> Option<()> {
+        match self {
+            Json::Null=>Some(()),
+            _=>None
+        }
+    }
+    pub fn as_array(&self)-> Option<&Vec<Json>> {
+        match self {
+            Json::Array(vec)=>Some(vec),
+            _=>None
+        }
+    }
+    pub fn as_mut_array(&mut self)-> Option<&mut Vec<Json>> {
+        match self {
+            Json::Array(vec)=>Some(vec),
+            _=>None
+        }
+    }
+    pub fn as_object(&self)-> Option<&Jmap> {
+        match self {
+            Json::Object(o)=>Some(o),
+            _=>None
+        }
+    }
+    pub fn as_mut_object(&mut self)-> Option<&mut Jmap> {
+        match self {
+            Json::Object(o)=>Some(o),
+            _=>None
+        }
+    }
 }
 
 #[cfg(test)]
