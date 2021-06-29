@@ -331,14 +331,14 @@ fn to_string_string(){
     let str = String::from("name:foo\nlname:bar");
     let json = Json::String(str.clone());
     let text = json.to_string();
-    assert_eq!(format!("\"{}\"",str),text);
+    assert_eq!(text,format!("\"{}\"",str));
 }
 
 #[test]
 fn to_string_empty_array(){
     let json = Json::Array(vec![]);
     let text = json.to_string();
-    assert_eq!("[]",text);
+    assert_eq!(text,"[]");
 }
 
 #[test]
@@ -350,14 +350,14 @@ fn to_string_non_empty_array(){
         Json::String(String::from("foo")),
     ]);
     let text = json.to_string();
-    assert_eq!(arr,text);
+    assert_eq!(text,arr);
 }
 
 #[test]
 fn to_string_empty_object(){
     let json = Json::Object(HashMap::new());
     let text = json.to_string();
-    assert_eq!("{}",text);
+    assert_eq!(text,"{}");
 }
 
 #[test]
