@@ -333,3 +333,23 @@ fn to_string_string(){
     let text = json.to_string();
     assert_eq!(format!("\"{}\"",str),text);
 }
+
+#[test]
+fn to_string_empty_array(){
+    let arr = "[]";
+    let json = Json::Array(vec![]);
+    let text = json.to_string();
+    assert_eq!(arr,text);
+}
+
+#[test]
+fn to_string_non_empty_array(){
+    let arr = "[2343,true,\"foo\"]";
+    let json = Json::Array(vec![
+        Json::Number(String::from("2343")),
+        Json::Bool(true),
+        Json::String(String::from("foo")),
+    ]);
+    let text = json.to_string();
+    assert_eq!(arr,text);
+}
