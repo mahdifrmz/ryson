@@ -3,6 +3,11 @@ name = "ryson"
 version = "0.1.0"
 authors = ["mahdi-frms <mahdif1380@outlook.com>"]
 edition = "2018"
+license = "MIT"
+readme = "README.md"
+description = "Ryson is a library for extracting json values from strings"
+repository = "https://github.com/mahdi-frms/ryson"
+keywords = ["Json","parser"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
