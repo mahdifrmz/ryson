@@ -1,7 +1,5 @@
 use std::collections::HashMap;
-
 use ryson::{Json,Jerr};
-use str_macro::str;
 
 #[test]
 fn accepts_null(){
@@ -35,7 +33,7 @@ fn throws_error_on_unknown_keyword(){
 fn accepts_integers(){
     let text = String::from("1024");
     let json = Json::parse(&text).unwrap();
-    assert_eq!(json,Json::Number(str!("1024")));
+    assert_eq!(json,Json::Number(String::from("1024")));
 }
 
 #[test]
@@ -49,21 +47,21 @@ fn error_on_non_digits_after_digits(){
 fn error_on_non_zero_starting_with_zero(){
     let text = String::from("0916");
     let jerr = Json::parse(&text).unwrap_err();
-    assert_eq!(jerr,Jerr::InvalidToken(str!("0916")));
+    assert_eq!(jerr,Jerr::InvalidToken(String::from("0916")));
 }
 
 #[test]
 fn accepts_rationals(){
     let text = String::from("16.824");
     let json = Json::parse(&text).unwrap();
-    assert_eq!(json,Json::Number(str!("16.824")));
+    assert_eq!(json,Json::Number(String::from("16.824")));
 }
 
 #[test]
 fn error_on_ending_dot(){
     let text = String::from("1624.");
     let jerr = Json::parse(&text).unwrap_err();
-    assert_eq!(jerr,Jerr::InvalidToken(str!("1624.")));
+    assert_eq!(jerr,Jerr::InvalidToken(String::from("1624.")));
 }
 
 
@@ -85,7 +83,7 @@ fn error_on_multiple_dots(){
 fn accepts_strings(){
     let text = String::from("\"hello world\"");
     let json = Json::parse(&text).unwrap();
-    assert_eq!(json,Json::String(str!("hello world")));
+    assert_eq!(json,Json::String(String::from("hello world")));
 }
 
 #[test]
@@ -106,35 +104,35 @@ fn error_on_text_after_ending_quote(){
 fn escapes_back_slash_quote(){
     let text = String::from("\"a quote is a \\\" sign\"");
     let json = Json::parse(&text).unwrap();
-    assert_eq!(json,Json::String(str!("a quote is a \" sign")));
+    assert_eq!(json,Json::String(String::from("a quote is a \" sign")));
 }
 
 #[test]
 fn escapes_double_back_slash(){
     let text = String::from("\"a backslash is a \\\\ sign\"");
     let json = Json::parse(&text).unwrap();
-    assert_eq!(json,Json::String(str!("a backslash is a \\ sign")));
+    assert_eq!(json,Json::String(String::from("a backslash is a \\ sign")));
 }
 
 #[test]
 fn escapes_criagereturn_tab_newline_formfeed_backspace(){
     let text = String::from("\"escaped:\\n\\thello\\b\\ftext file\\r\"");
     let json = Json::parse(&text).unwrap();
-    assert_eq!(json,Json::String(str!("escaped:\n\thello\x08\x0Ctext file\r")));
+    assert_eq!(json,Json::String(String::from("escaped:\n\thello\x08\x0Ctext file\r")));
 }
 
 #[test]
 fn escapes_unicode(){
     let text = String::from("\"this is theta : \\u03F4\"");
     let json = Json::parse(&text).unwrap();
-    assert_eq!(json,Json::String(str!("this is theta : ϴ")));
+    assert_eq!(json,Json::String(String::from("this is theta : ϴ")));
 }
 
 #[test]
 fn error_on_invalid_unicode(){
     let text = String::from("\"this is invalid : \\u93G4\"");
     let jerr = Json::parse(&text).unwrap_err();
-    assert_eq!(jerr,Jerr::InvalidUnicodeSequence(str!("93G4")));
+    assert_eq!(jerr,Jerr::InvalidUnicodeSequence(String::from("93G4")));
 }
 
 #[test]
@@ -159,8 +157,8 @@ fn multi_element_array(){
     let json = Json::parse(&text).unwrap();
     assert_eq!(json,Json::Array(vec![
         Json::Bool(true),
-        Json::Number(str!("1444")),
-        Json::String(str!("third element"))
+        Json::Number(String::from("1444")),
+        Json::String(String::from("third element"))
     ]));
 }
 
@@ -172,8 +170,8 @@ fn ignore_white_space_newline(){
     let json = Json::parse(&text).unwrap();
     assert_eq!(json,Json::Array(vec![
         Json::Bool(true),
-        Json::Number(str!("1444")),
-        Json::String(str!("third element"))
+        Json::Number(String::from("1444")),
+        Json::String(String::from("third element"))
     ]));
 }
 
@@ -223,7 +221,7 @@ fn accepts_single_field_objects(){
     let text = String::from("{\"port\":8080}");
     let json = Json::parse(&text).unwrap();
     let mut map = HashMap::new();
-    map.insert(str!("port"), Json::Number(str!("8080")));
+    map.insert(String::from("port"), Json::Number(String::from("8080")));
     assert_eq!(json,Json::Object(map));
 }
 
@@ -254,8 +252,8 @@ fn accepts_multi_field_objects(){
     let json = Json::parse(&text).unwrap();
 
     let mut map = HashMap::new();
-    map.insert(str!("port"), Json::Number(str!("80")));
-    map.insert(str!("host"), Json::String(str!("localhost")));
+    map.insert(String::from("port"), Json::Number(String::from("80")));
+    map.insert(String::from("host"), Json::String(String::from("localhost")));
 
     assert_eq!(json,Json::Object(map));
 }
@@ -266,9 +264,9 @@ fn accepts_object_array_property(){
     let json = Json::parse(&text).unwrap();
 
     let mut map = HashMap::new();
-    let arr = vec![Json::String(str!("localhost")),Json::Bool(true)];
-    map.insert(str!("port"), Json::Number(str!("80")));
-    map.insert(str!("host"), Json::Array(arr));
+    let arr = vec![Json::String(String::from("localhost")),Json::Bool(true)];
+    map.insert(String::from("port"), Json::Number(String::from("80")));
+    map.insert(String::from("host"), Json::Array(arr));
 
     assert_eq!(json,Json::Object(map));
 }
@@ -280,9 +278,9 @@ fn accepts_nested_objects(){
 
     let mut map = HashMap::new();
     let mut inner_map = HashMap::new();
-    inner_map.insert(str!("localhost"), Json::Bool(true));
-    map.insert(str!("port"), Json::Number(str!("80")));
-    map.insert(str!("host"), Json::Object(inner_map));
+    inner_map.insert(String::from("localhost"), Json::Bool(true));
+    map.insert(String::from("port"), Json::Number(String::from("80")));
+    map.insert(String::from("host"), Json::Object(inner_map));
 
     assert_eq!(json,Json::Object(map));
 }
@@ -293,7 +291,7 @@ fn accepts_array_with_object_element(){
     let json = Json::parse(&text).unwrap();
 
     let mut inner_map = HashMap::new();
-    inner_map.insert(str!("version"), Json::String(str!("1.10.3")));
+    inner_map.insert(String::from("version"), Json::String(String::from("1.10.3")));
     let arr = Json::Array(vec![Json::Object(inner_map)]);
 
     assert_eq!(json,arr);

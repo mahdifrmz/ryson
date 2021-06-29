@@ -12,5 +12,4 @@ keywords = ["Json","parser"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-str-macro = "1.0.0"
 hex = "0.4.3"
