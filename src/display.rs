@@ -31,10 +31,19 @@ impl Json {
                 }
                 text.push(']');
                 text
-            }
-            _ => {
-                String::from("")
             },
+            Json::Object(map)=>{
+                let mut text = String::from("{");
+                for key in map.keys() {
+                    let value = map.get(key).unwrap();
+                    text.push_str(format!("{}:{},",key,value.to_string()).as_str());
+                }
+                if text.chars().last().unwrap() == ',' {
+                    text.pop();
+                }
+                text.push('}');
+                text
+            }
         }
     }
 }

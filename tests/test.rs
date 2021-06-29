@@ -336,10 +336,9 @@ fn to_string_string(){
 
 #[test]
 fn to_string_empty_array(){
-    let arr = "[]";
     let json = Json::Array(vec![]);
     let text = json.to_string();
-    assert_eq!(arr,text);
+    assert_eq!("[]",text);
 }
 
 #[test]
@@ -352,4 +351,23 @@ fn to_string_non_empty_array(){
     ]);
     let text = json.to_string();
     assert_eq!(arr,text);
+}
+
+#[test]
+fn to_string_empty_object(){
+    let json = Json::Object(HashMap::new());
+    let text = json.to_string();
+    assert_eq!("{}",text);
+}
+
+#[test]
+fn to_string_none_empty_object(){
+    let str1 = "{host:\"http://localhost\",port:80}";
+    let str2 = "{port:80,host:\"http://localhost\"}";
+    let mut map : HashMap<String,Json> = HashMap::new();
+    map.insert(String::from("host"), Json::String(String::from("http://localhost")));
+    map.insert(String::from("port"), Json::Number(String::from("80")));
+    let json = Json::Object(map);
+    let text = json.to_string();
+    assert!(text == str1 || text == str2);
 }
