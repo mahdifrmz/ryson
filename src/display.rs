@@ -10,7 +10,7 @@ impl Json {
                 num.clone()
             },
             Json::String(str) => {
-                str.clone()
+                format!("\"{}\"",str)
             },
             Json::Bool(bl) => {
                 if *bl {

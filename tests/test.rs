@@ -331,5 +331,5 @@ fn to_string_string(){
     let str = String::from("name:foo\nlname:bar");
     let json = Json::String(str.clone());
     let text = json.to_string();
-    assert_eq!(text,str);
+    assert_eq!(format!("\"{}\"",str),text);
 }
