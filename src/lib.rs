@@ -1,4 +1,5 @@
 mod parser;
+mod display;
 pub use parser::Jerr;
 
 #[derive(Debug,PartialEq,Eq,Clone)]

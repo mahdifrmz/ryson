@@ -303,3 +303,33 @@ fn accepts_empty_object(){
     let json = Json::parse(&text).unwrap();
     assert_eq!(json,Json::Object(HashMap::new()));
 }
+
+#[test]
+fn to_string_null(){
+    let json = Json::Null;
+    let text = json.to_string();
+    assert_eq!(text,String::from("null"));
+}
+
+#[test]
+fn to_string_boolean(){
+    let json = Json::Bool(false);
+    let text = json.to_string();
+    assert_eq!(text,String::from("false"));
+}
+
+#[test]
+fn to_string_number(){
+    let num = String::from("2535.99");
+    let json = Json::Number(num.clone());
+    let text = json.to_string();
+    assert_eq!(text,num);
+}
+
+#[test]
+fn to_string_string(){
+    let str = String::from("name:foo\nlname:bar");
+    let json = Json::String(str.clone());
+    let text = json.to_string();
+    assert_eq!(text,str);
+}
