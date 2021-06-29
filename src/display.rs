@@ -29,7 +29,7 @@ fn object_to_string(map:&HashMap<String,Json>)-> String {
 }
 
 impl Json {
-    pub fn to_string(&self)->String {
+    fn to_string(&self)->String {
         match self {
             Json::Null => String::from("null"),
             Json::Number(num) => num.clone(),
