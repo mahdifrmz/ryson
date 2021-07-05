@@ -9,7 +9,5 @@ description = "Ryson is a library for extracting json values from strings"
 repository = "https://github.com/mahdi-frms/ryson"
 keywords = ["Json","parser"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 hex = "0.4.3"
