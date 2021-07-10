@@ -21,7 +21,7 @@ to use the library simply add the following to the **dependency**
 section of your Cargo.toml:
 
 ```
-ryson = "1.0.0"
+ryson = "0.1.0"
 ```
 
 ## Parsing
